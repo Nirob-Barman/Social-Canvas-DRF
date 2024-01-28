@@ -24,6 +24,7 @@ from django.contrib import messages
 from rest_framework.permissions import IsAuthenticated
 
 from rest_framework.decorators import api_view, permission_classes
+from django.contrib.sites.shortcuts import get_current_site
 
 class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -86,9 +87,13 @@ class UserRegistration(APIView):
         if serializer.is_valid():
             user = serializer.save()
 
+            # Generate activation link with the correct domain
+            current_site = get_current_site(request)
+
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            confirm_link = f'http://127.0.0.1:8000/accounts/activate/{uid}/{token}/'
+            # confirm_link = f'http://127.0.0.1:8000/accounts/activate/{uid}/{token}/'
+            confirm_link = f'http://{current_site.domain}/accounts/activate/{uid}/{token}/'
 
             email_subject = 'Confirm your email'
             email_body = render_to_string(
