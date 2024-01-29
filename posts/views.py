@@ -7,6 +7,9 @@ from .serializers import PostSerializer
 from rest_framework.permissions import AllowAny
 from django.contrib.auth.models import AnonymousUser
 
+from django.middleware.csrf import get_token
+from django.contrib.sessions.models import Session
+
 class PostListView(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
@@ -55,6 +58,31 @@ class MyPostsView(generics.ListAPIView):
 
 # class MyPostsView(generics.ListAPIView):
 #     serializer_class = PostSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def list(self, request, *args, **kwargs):
+#         # Get CSRF token
+#         csrf_token = get_token(request)
+#         # Get session ID
+#         session_id = request.session.session_key
+
+#         # Get the queryset
+#         queryset = self.get_queryset()
+
+#         # Serialize the queryset
+#         serializer = self.get_serializer(queryset, many=True)
+
+#         # Create the response data
+#         data = {
+#             'csrf_token': csrf_token,
+#             'session_id': session_id,
+#             'posts': serializer.data,
+#         }
+
+#         return Response(data)
+
+# class MyPostsView(generics.ListAPIView):
+#     serializer_class = PostSerializer
 
 #     def get_queryset(self):
 #         user = self.request.user
@@ -88,7 +116,20 @@ class AddPostView(generics.CreateAPIView):
         serializer.save(user=self.request.user)
 
 
-class UpdatePostView(generics.UpdateAPIView):
+# class UpdatePostView(generics.UpdateAPIView):
+#     queryset = Post.objects.all()
+#     serializer_class = PostSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def get_object(self):
+#         # Override the default get_object to include user check
+#         obj = super().get_object()
+#         if obj.user == self.request.user:
+#             return obj
+#         raise PermissionDenied("You don't have permission to update this post.")
+
+
+class UpdatePostView(generics.RetrieveUpdateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -98,5 +139,11 @@ class UpdatePostView(generics.UpdateAPIView):
         obj = super().get_object()
         if obj.user == self.request.user:
             return obj
-        raise PermissionDenied("You don't have permission to update this post.")
+        raise PermissionDenied(
+            "You don't have permission to update this post.")
 
+    def get(self, request, *args, **kwargs):
+        # Retrieve the current object data
+        current_object = self.get_object()
+        serializer = self.get_serializer(current_object)
+        return Response(serializer.data)

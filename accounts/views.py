@@ -26,6 +26,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.sites.shortcuts import get_current_site
 
+from rest_framework.permissions import AllowAny
+from rest_framework.authentication import TokenAuthentication
+
+
+from django.middleware.csrf import get_token
+from django.contrib.sessions.models import Session
+
+from django.conf import settings
+
 class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -42,7 +51,15 @@ class UserDetailView(APIView):
             'phone': user.AbstractUserDetails.phone if hasattr(user, 'AbstractUserDetails') else None,
             'profile_pic': str(user.AbstractUserDetails.profile_pic) if hasattr(user, 'AbstractUserDetails') and user.AbstractUserDetails.profile_pic else None,
         }
-        return Response(user_details)
+
+        # Get CSRF token
+        csrf_token = get_token(request)
+        # Get session ID
+        session_id = request.session.session_key
+        # print('csrf_token', csrf_token)
+        # print("session_id", session_id)
+        
+        return Response(user_details, status=status.HTTP_200_OK)
 
 # @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
@@ -130,6 +147,9 @@ def activate(request, uid64, token):
 
 
 class UserLoginApiView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [AllowAny]
+
     def post(self, request):
         serializer = serializers.UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -143,7 +163,19 @@ class UserLoginApiView(APIView):
         if user and user.check_password(password):
             token, _ = Token.objects.get_or_create(user=user)
             login(request, user)
-            return Response({'token': token.key, 'email': user.email, 'user_id': user.id}, status=status.HTTP_200_OK)
+            print(f"Token: {token}")
+            print(f"Token key: {token.key}")
+            print('Login successful')
+            print(f"User: {user}")
+
+            # Get CSRF token
+            csrf_token = get_token(request)
+            # Get session ID
+            session_id = request.session.session_key
+            print('csrf_token', csrf_token)
+            print("session_id", session_id)
+
+            return Response({'token': token.key, 'email': user.email, 'user_id': user.id, 'csrf_token': csrf_token, 'session_id': session_id}, status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -153,16 +185,42 @@ class UserLogoutView(APIView):
         if request.auth:  # Check if authentication token exists
             request.auth.delete()  # Delete the authentication token
         logout(request)
-        return Response({'detail': 'Logout successful'}, status=status.HTTP_200_OK)
 
-class UpdateUserView(generics.UpdateAPIView):
+        # return Response({'detail': 'Logout successful'}, status=status.HTTP_200_OK)
+
+        # Delete CSRF token
+        csrf_token = get_token(request)
+        response = Response({'detail': 'Logout successful'},
+                            status=status.HTTP_200_OK)
+        response.delete_cookie(settings.CSRF_COOKIE_NAME)
+
+        # Clear session
+        request.session.clear()
+
+        return response
+
+# class UpdateUserView(generics.UpdateAPIView):
+#     serializer_class = serializers.UpdateUserSerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def get_object(self):
+#         # print(self.request.user)
+#         # return self.request.user.AbstractUserDetails
+
+#         user = self.request.user
+
+#         # Check if UserDetails exists for the user, create if not
+#         if not hasattr(user, 'AbstractUserDetails'):
+#             models.UserDetails.objects.create(user=user)
+
+#         return user.AbstractUserDetails
+
+
+class UpdateUserView(generics.RetrieveUpdateAPIView):
     serializer_class = serializers.UpdateUserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        # print(self.request.user)
-        # return self.request.user.AbstractUserDetails
-
         user = self.request.user
 
         # Check if UserDetails exists for the user, create if not
@@ -170,3 +228,17 @@ class UpdateUserView(generics.UpdateAPIView):
             models.UserDetails.objects.create(user=user)
 
         return user.AbstractUserDetails
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        # Retrieve updated object data
+        updated_instance = self.get_object()
+        updated_serializer = self.get_serializer(updated_instance)
+
+        return Response(updated_serializer.data, status=status.HTTP_200_OK)
