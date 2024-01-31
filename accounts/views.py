@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import render
 from rest_framework import viewsets, status, generics
 from rest_framework.views import APIView
@@ -35,7 +36,11 @@ from django.contrib.sessions.models import Session
 
 from django.conf import settings
 
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+
 class UserDetailView(APIView):
+    # authentication_classes = [BasicAuthentication]
+    # authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

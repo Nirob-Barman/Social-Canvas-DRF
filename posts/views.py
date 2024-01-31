@@ -13,7 +13,7 @@ from django.contrib.sessions.models import Session
 class PostListView(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
 
 class PostDetailView(generics.RetrieveAPIView):
