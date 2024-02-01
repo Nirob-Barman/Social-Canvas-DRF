@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Post, Like, Comment
@@ -10,10 +10,21 @@ from django.contrib.auth.models import AnonymousUser
 from django.middleware.csrf import get_token
 from django.contrib.sessions.models import Session
 
-class PostListView(generics.ListCreateAPIView):
+from rest_framework.decorators import api_view, permission_classes
+
+class PostListViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     # permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Set the user for the new post
+        serializer.save(user=self.request.user)
+
+class PostListView(generics.ListCreateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class PostDetailView(generics.RetrieveAPIView):
@@ -21,6 +32,38 @@ class PostDetailView(generics.RetrieveAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
+# @api_view(['POST', 'DELETE'])
+# @permission_classes([permissions.IsAuthenticated])
+# def like_unlike_post(request, post_id):
+#     post = get_object_or_404(Post, id=post_id)
+#     user = request.user
+
+#     try:
+#         like = Like.objects.get(user=user, post=post)
+#         like.delete()
+#         user_has_liked = False
+#     except Like.DoesNotExist:
+#         Like.objects.create(user=user, post=post)
+#         user_has_liked = True
+
+#     post.refresh_from_db()  # Update post like_count
+#     serializer = PostSerializer(post, context={'request': request})
+
+#     return Response({
+#         'user_has_liked': user_has_liked,
+#         **serializer.data,
+#     })
+
+class LikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        Like.objects.create(user=request.user, post=post)
+        post.refresh_from_db()  # Refresh the post object to get the updated like_count
+        serializer = PostSerializer(post)
+        return Response(serializer.data)
 
 class LikeView(APIView):
     permission_classes = [permissions.IsAuthenticated]

@@ -3,9 +3,11 @@ from .models import Post, Like, Comment
 
 class PostSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    like_count = serializers.ReadOnlyField()
+    comment_count = serializers.ReadOnlyField()
     class Meta:
         model = Post
-        fields = ['id', 'user', 'content', 'image', 'video_url', 'created_at']
+        fields = ['id', 'user', 'content', 'image', 'video_url', 'created_at', 'updated_at', 'like_count', 'comment_count']
 
 
 class LikeSerializer(serializers.ModelSerializer):
