@@ -160,25 +160,25 @@ class UserLoginApiView(APIView):
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
         password = serializer.validated_data['password']
-        print(f"Email: {email}, Password: {password}")
+        # print(f"Email: {email}, Password: {password}")
 
         user = User.objects.filter(email=email).first()
-        print(f"User: {user}")
+        # print(f"User: {user}")
         
         if user and user.check_password(password):
             token, _ = Token.objects.get_or_create(user=user)
             login(request, user)
-            print(f"Token: {token}")
-            print(f"Token key: {token.key}")
-            print('Login successful')
-            print(f"User: {user}")
+            # print(f"Token: {token}")
+            # print(f"Token key: {token.key}")
+            # print('Login successful')
+            # print(f"User: {user}")
 
             # Get CSRF token
             csrf_token = get_token(request)
             # Get session ID
             session_id = request.session.session_key
-            print('csrf_token', csrf_token)
-            print("session_id", session_id)
+            # print('csrf_token', csrf_token)
+            # print("session_id", session_id)
 
             return Response({'token': token.key, 'email': user.email, 'user_id': user.id, 'csrf_token': csrf_token, 'session_id': session_id}, status=status.HTTP_200_OK)
         else:
@@ -245,5 +245,6 @@ class UpdateUserView(generics.RetrieveUpdateAPIView):
         # Retrieve updated object data
         updated_instance = self.get_object()
         updated_serializer = self.get_serializer(updated_instance)
+        print('updated_serializer', updated_serializer)
 
         return Response(updated_serializer.data, status=status.HTTP_200_OK)

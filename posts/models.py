@@ -21,30 +21,9 @@ class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.post.like_count = Like.objects.filter(post=self.post).count()
-        self.post.save()
-
-    def delete(self, *args, **kwargs):
-        super().delete(*args, **kwargs)
-        self.post.like_count = Like.objects.filter(post=self.post).count()
-        self.post.save()
-
-
+    
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.post.comment_count = Comment.objects.filter(post=self.post).count()
-        self.post.save()
-
-    def delete(self, *args, **kwargs):
-        super().delete(*args, **kwargs)
-        self.post.comment_count = Comment.objects.filter(post=self.post).count()
-        self.post.save()

@@ -54,7 +54,8 @@ class UserLoginSerializer(serializers.Serializer):
 
 class UpdateUserSerializer(serializers.ModelSerializer):
     profile_pic = serializers.ImageField(required=False)
-    birth_date = serializers.DateField(write_only=True, input_formats=['%Y-%m-%d'], required=False)
+    # birth_date = serializers.DateField(write_only=True, input_formats=['%Y-%m-%d'], required=False)
+    birth_date = serializers.DateField(input_formats=['%Y-%m-%d'], required=False)
     gender = serializers.ChoiceField(choices=GENDER_TYPE)
     division = serializers.ChoiceField(required=False, choices=DIVISION_TYPE)
     district = serializers.CharField(required=False)
