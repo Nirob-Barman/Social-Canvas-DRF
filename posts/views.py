@@ -11,6 +11,8 @@ from django.middleware.csrf import get_token
 from django.contrib.sessions.models import Session
 
 from rest_framework.decorators import api_view, permission_classes
+from django.db import models
+
 
 class PostListViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
@@ -43,22 +45,99 @@ class PostDetailView(generics.RetrieveAPIView):
 #         return context
 
 
-class LikeView(APIView):
+class LikeCreateView(generics.CreateAPIView):
+    serializer_class = LikeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Get the post ID from the URL
+        post_id = self.kwargs.get('post_id', None)
+
+        # Check if the post exists
+        post = get_object_or_404(Post, pk=post_id)
+
+        # Associate the like with the current user and the post
+        serializer.save(user=self.request.user, post=post)
+
+        # Update the like count in the associated post
+        post.like_count += 1
+        post.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class UserHasLikedView(generics.RetrieveAPIView):
+    serializer_class = LikeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, post_id, *args, **kwargs):
+        # Check if the post exists
+        post = get_object_or_404(Post, pk=post_id)
+
+        # Check if the user has liked the post
+        user_has_liked = Like.objects.filter(post=post, user=request.user).exists()
+
+        return Response({'user_has_liked': user_has_liked}, status=status.HTTP_200_OK)
+
+
+class UnlikePostView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, post_id, *args, **kwargs):
+        # Check if the post exists
+        post = get_object_or_404(Post, pk=post_id)
+
+        # Check if the user has liked the post
+        like = Like.objects.filter(post=post, user=request.user).first()
+
+        if like:
+            # Delete the like
+            like.delete()
+
+            # Update the like count in the associated post
+            post.like_count -= 1
+            post.save()
+
+            return Response({'message': 'Post unliked successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'message': 'User has not liked the post'}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserLikedPostsView(generics.ListAPIView):
+    serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        Like.objects.create(user=request.user, post=post)
-        return Response({'message': 'Post liked successfully'})
+    def get_queryset(self):
+        # Retrieve posts liked by the current user
+        liked_posts = Post.objects.filter(like__user=self.request.user)
+        return liked_posts
 
-    def delete(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        like = Like.objects.filter(user=request.user, post=post).first()
-        if like:
-            like.delete()
-            return Response({'message': 'Like removed successfully'})
-        return Response({'message': 'Like not found'})
 
+class LeastLikedPostsView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Retrieve liked posts with the least like count
+        least_liked_posts = Post.objects.annotate(total_likes=models.Count('like')).order_by('total_likes')
+        return least_liked_posts
+
+class AllLikedPostsView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Retrieve all posts that have been liked
+        liked_posts = Post.objects.filter(like__isnull=False)
+        return liked_posts
+
+class TopLikedPostsView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Retrieve liked posts with the highest like count
+        # liked_posts = Post.objects.annotate(like_count=models.Count('like')).order_by('-like_count')
+        liked_posts = Post.objects.annotate(total_likes=models.Count('like')).order_by('-total_likes')
+        return liked_posts
 
 class CommentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -110,16 +189,7 @@ class PostCommentCountView(APIView):
         # Return the comment count in the response
         return Response({'comment_count': comment_count})
 
-# class CommentUpdateView(generics.UpdateAPIView):
-#     queryset = Comment.objects.all()
-#     serializer_class = CommentSerializer
-#     permission_classes = [IsAuthenticated]
 
-#     def get_object(self):
-#         comment_id = self.kwargs.get('comment_id')
-#         # Retrieve the comment and check if the user is the owner
-#         comment = get_object_or_404(Comment, id=comment_id, user=self.request.user)
-#         return comment
 
 class CommentUpdateView(generics.UpdateAPIView):
     queryset = Comment.objects.all()
