@@ -3,9 +3,9 @@ from rest_framework import generics, permissions, viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Post, Like, Comment
-from .serializers import PostSerializer, LikeSerializer
-from rest_framework.permissions import AllowAny
-from django.contrib.auth.models import AnonymousUser
+from .serializers import PostSerializer, LikeSerializer, CommentSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.contrib.auth.models import AnonymousUser, User
 
 from django.middleware.csrf import get_token
 from django.contrib.sessions.models import Session
@@ -68,6 +68,100 @@ class CommentView(APIView):
         content = request.data.get('content', '')
         Comment.objects.create(user=request.user, post=post, content=content)
         return Response({'message': 'Comment added successfully'})
+    
+
+
+class CommentCreateView(generics.CreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        post_id = self.kwargs.get('post_id')
+        post = get_object_or_404(Post, id=post_id)
+        serializer.save(user=self.request.user, post=post)
+
+
+class UserCommentsListView(generics.ListAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Retrieve the authenticated user
+        user = self.request.user
+        # Return all comments by the authenticated user
+        return Comment.objects.filter(user=user)
+
+
+class AllCommentsListView(generics.ListAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class PostCommentCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, post_id, format=None):
+        # Retrieve the post based on post_id
+        post = get_object_or_404(Post, id=post_id)
+        # Count the comments for the post
+        comment_count = Comment.objects.filter(post=post).count()
+        # Return the comment count in the response
+        return Response({'comment_count': comment_count})
+
+# class CommentUpdateView(generics.UpdateAPIView):
+#     queryset = Comment.objects.all()
+#     serializer_class = CommentSerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def get_object(self):
+#         comment_id = self.kwargs.get('comment_id')
+#         # Retrieve the comment and check if the user is the owner
+#         comment = get_object_or_404(Comment, id=comment_id, user=self.request.user)
+#         return comment
+
+class CommentUpdateView(generics.UpdateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        comment_id = self.kwargs.get('comment_id')
+        comment = get_object_or_404(Comment, id=comment_id)
+
+        # Check if the current user is the owner of the comment
+        if comment.user != self.request.user:
+            self.permission_denied(self.request)
+        
+        return comment
+
+
+class CommentDeleteView(generics.DestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        comment_id = self.kwargs.get('comment_id')
+        return get_object_or_404(Comment, id=comment_id, user=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PostCommentsListView(generics.ListAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Retrieve the post based on post_id
+        post_id = self.kwargs.get('post_id')
+        post = get_object_or_404(Post, id=post_id)
+        # Return all comments for the specified post
+        return Comment.objects.filter(post=post)
 
 
 class MyPostsView(generics.ListAPIView):
