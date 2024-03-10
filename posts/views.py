@@ -190,6 +190,19 @@ class PostCommentCountView(APIView):
         return Response({'comment_count': comment_count})
 
 
+class CommentBelongsToUserView(APIView):
+    """
+    Check if the comment belongs to the authenticated user.
+    """
+
+    def get(self, request, comment_id):
+        comment = get_object_or_404(Comment, id=comment_id)
+
+        # Check if the comment belongs to the authenticated user
+        if request.user == comment.user:
+            return Response({'belongs_to_user': True}, status=status.HTTP_200_OK)
+        else:
+            return Response({'belongs_to_user': False}, status=status.HTTP_200_OK)
 
 class CommentUpdateView(generics.UpdateAPIView):
     queryset = Comment.objects.all()
