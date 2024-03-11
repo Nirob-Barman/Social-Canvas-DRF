@@ -23,6 +23,7 @@ class PostListViewSet(viewsets.ModelViewSet):
         # Set the user for the new post
         serializer.save(user=self.request.user)
 
+
 class PostListView(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
@@ -52,9 +53,11 @@ class LikeCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         # Get the post ID from the URL
         post_id = self.kwargs.get('post_id', None)
+        # print(post_id)
 
         # Check if the post exists
         post = get_object_or_404(Post, pk=post_id)
+        # print(post)
 
         # Associate the like with the current user and the post
         serializer.save(user=self.request.user, post=post)
@@ -65,6 +68,7 @@ class LikeCreateView(generics.CreateAPIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 class UserHasLikedView(generics.RetrieveAPIView):
     serializer_class = LikeSerializer
     permission_classes = [IsAuthenticated]
@@ -74,7 +78,8 @@ class UserHasLikedView(generics.RetrieveAPIView):
         post = get_object_or_404(Post, pk=post_id)
 
         # Check if the user has liked the post
-        user_has_liked = Like.objects.filter(post=post, user=request.user).exists()
+        user_has_liked = Like.objects.filter(
+            post=post, user=request.user).exists()
 
         return Response({'user_has_liked': user_has_liked}, status=status.HTTP_200_OK)
 
@@ -101,6 +106,7 @@ class UnlikePostView(generics.DestroyAPIView):
         else:
             return Response({'message': 'User has not liked the post'}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class UserLikedPostsView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -117,8 +123,10 @@ class LeastLikedPostsView(generics.ListAPIView):
 
     def get_queryset(self):
         # Retrieve liked posts with the least like count
-        least_liked_posts = Post.objects.annotate(total_likes=models.Count('like')).order_by('total_likes')
+        least_liked_posts = Post.objects.annotate(
+            total_likes=models.Count('like')).order_by('total_likes')
         return least_liked_posts
+
 
 class AllLikedPostsView(generics.ListAPIView):
     serializer_class = PostSerializer
@@ -129,6 +137,7 @@ class AllLikedPostsView(generics.ListAPIView):
         liked_posts = Post.objects.filter(like__isnull=False)
         return liked_posts
 
+
 class TopLikedPostsView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -136,8 +145,20 @@ class TopLikedPostsView(generics.ListAPIView):
     def get_queryset(self):
         # Retrieve liked posts with the highest like count
         # liked_posts = Post.objects.annotate(like_count=models.Count('like')).order_by('-like_count')
-        liked_posts = Post.objects.annotate(total_likes=models.Count('like')).order_by('-total_likes')
+        liked_posts = Post.objects.annotate(
+            total_likes=models.Count('like')).order_by('-total_likes')
         return liked_posts
+
+
+class UnlikedPostsListView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        liked_post_ids = Like.objects.filter(
+            user=user).values_list('post__id', flat=True)
+        return Post.objects.exclude(id__in=liked_post_ids)
 
 class CommentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -147,7 +168,6 @@ class CommentView(APIView):
         content = request.data.get('content', '')
         Comment.objects.create(user=request.user, post=post, content=content)
         return Response({'message': 'Comment added successfully'})
-    
 
 
 class CommentCreateView(generics.CreateAPIView):
@@ -157,6 +177,7 @@ class CommentCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         post_id = self.kwargs.get('post_id')
+        print("post id: ", post_id)
         post = get_object_or_404(Post, id=post_id)
         serializer.save(user=self.request.user, post=post)
 
@@ -177,6 +198,12 @@ class AllCommentsListView(generics.ListAPIView):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
 
+
+class UncommentedPostListView(APIView):
+    def get(self, request, *args, **kwargs):
+        uncommented_posts = Post.objects.filter(comment_count=0)
+        serializer = PostSerializer(uncommented_posts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class PostCommentCountView(APIView):
     permission_classes = [IsAuthenticated]
@@ -204,6 +231,7 @@ class CommentBelongsToUserView(APIView):
         else:
             return Response({'belongs_to_user': False}, status=status.HTTP_200_OK)
 
+
 class CommentUpdateView(generics.UpdateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
@@ -216,7 +244,7 @@ class CommentUpdateView(generics.UpdateAPIView):
         # Check if the current user is the owner of the comment
         if comment.user != self.request.user:
             self.permission_denied(self.request)
-        
+
         return comment
 
 
