@@ -53,10 +53,10 @@ CORS_ALLOWED_ORIGINS = [
 # CORS_ALLOWED_ORIGINS = os.getenv(
 # 'CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,https://yoursite.com').split(',')
 
-# CORS_ORIGIN_WHITELIST = (
-#     'http://localhost:5173',
-#     "https://social-canvas-3b50e.web.app"
-# )
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:5173',
+    "https://social-canvas-3b50e.web.app"
+)
 
 CORS_ALLOW_METHODS = [
     'DELETE',
