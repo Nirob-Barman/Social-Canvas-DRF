@@ -13,6 +13,10 @@ from django.contrib.sessions.models import Session
 from rest_framework.decorators import api_view, permission_classes
 from django.db import models
 
+from django.db.models import Count, Subquery
+from django.db.models.functions import Coalesce
+
+
 
 class RecentPostsView(generics.ListAPIView):
     serializer_class = PostSerializer
@@ -56,30 +60,6 @@ class PostDetailView(generics.RetrieveAPIView):
 #         context.update({'request': self.request})
 #         return context
 
-
-class ActivityFeedAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        # Retrieve recent posts, comments, and likes from followed users
-        following_users = request.user.profile.following.all()
-        followed_posts = Post.objects.filter(
-            user__in=following_users).order_by('-created_at')[:10]
-        followed_comments = Comment.objects.filter(
-            user__in=following_users).order_by('-created_at')[:10]
-        followed_likes = Like.objects.filter(
-            post__user__in=following_users).order_by('-created_at')[:10]
-
-        # Combine and order the activities
-        activities = list(followed_posts) + \
-            list(followed_comments) + list(followed_likes)
-        activities.sort(key=lambda x: x.created_at, reverse=True)
-        activities = activities[:10]
-
-        # Serialize the data
-        activity_feed_data = ActivityFeedSerializer(activities, many=True).data
-
-        return Response(activity_feed_data, status=status.HTTP_200_OK)
 
 class LikeCreateView(generics.CreateAPIView):
     serializer_class = LikeSerializer
@@ -175,7 +155,7 @@ class AllLikedPostsView(generics.ListAPIView):
 
 class TopLikedPostsView(generics.ListAPIView):
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         # Retrieve liked posts with the highest like count
@@ -344,6 +324,68 @@ class AddPostView(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+
+# class TopCommentedPostsView(APIView):
+#     def get(self, request, *args, **kwargs):
+#         try:
+#             # Retrieve top commented posts
+#             top_commented_posts = Post.objects.annotate(
+#                 comment_count=models.Count('comments')).order_by('-comment_count')[:5]
+
+#             # Serialize the posts
+#             serializer = PostSerializer(top_commented_posts, many=True)
+
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# class TopCommentedPostsView(APIView):
+#     def get(self, request, *args, **kwargs):
+#         try:
+#             # Subquery to get comment count for each post
+#             comment_count_subquery = Subquery(
+#                 Comment.objects.filter(post=models.OuterRef('pk')).values(
+#                     'post').annotate(comment_count=Count('id')).values('comment_count')[:1]
+#             )
+
+#             # Retrieve top commented posts
+#             top_commented_posts = Post.objects.annotate(comment_count=Coalesce(
+#                 comment_count_subquery, 0)).order_by('-comment_count')[:5]
+
+#             # Serialize the posts
+#             serializer = PostSerializer(top_commented_posts, many=True)
+
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# class TopCommentedPostsView(APIView):
+#     def get(self, request, *args, **kwargs):
+#         try:
+#             # Retrieve top commented posts
+#             top_commented_posts = Post.objects.annotate(comment_count=Count('comments')).order_by('-comment_count')[:5]
+            
+#             # Serialize the posts
+#             serializer = PostSerializer(top_commented_posts, many=True)
+            
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class TopCommentedPostsView(APIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            # Retrieve top commented posts
+            top_commented_posts = Post.objects.annotate(
+                comment_count_value=Count('comments')).order_by('-comment_count_value')[:5]
+
+            # Serialize the posts
+            serializer = PostSerializer(top_commented_posts, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # class UpdatePostView(generics.UpdateAPIView):
 #     queryset = Post.objects.all()

@@ -21,7 +21,9 @@ class PostSerializer(serializers.ModelSerializer):
     # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     user = UserSerializer(read_only=True)
     like_count = serializers.ReadOnlyField()
-    comment_count = serializers.ReadOnlyField()
+    # comment_count = serializers.ReadOnlyField()
+    # comment_count_value = serializers.ReadOnlyField(source='comment_count_value')  # Add this line
+    comment_count_value = serializers.ReadOnlyField()
 
     # field to indicate whether the current user has liked the post
     # user_has_liked = serializers.SerializerMethodField()
@@ -32,7 +34,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id', 'user', 'content', 'image', 'video_url', 'created_at',
-                  'updated_at', 'like_count', 'comment_count', 'comments']
+                  'updated_at', 'like_count', 'comments', 'comment_count_value']
 
     def get_user_has_liked(self, obj):
         request = self.context.get('request')
