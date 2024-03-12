@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 import environ
 env = environ.Env()
@@ -28,9 +28,10 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = getenv("DJANGO_ALLOWED_HOSTS","127.0.0.1,localhost,yoursite.com").split(",")
+# ALLOWED_HOSTS = os.getenv(
+#     "DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,https://social-canvas-3b50e.web.app.com").split(",")
 
-ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://social-canvas.onrender.com/', 'https://*.127.0.0.1',
@@ -45,16 +46,17 @@ CSRF_COOKIE_NAME = 'csrftoken'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Replace with the actual URL of your frontend
     "https://social-canvas.onrender.com",
-    # "https://*.127.0.0.1",
+    "https://*.127.0.0.1",
     "https://social-canvas-3b50e.web.app"
 ]
 
-# CORS_ALLOWED_ORIGINS = getenv('CORS_ALLOWED_ORIGINS','http://localhost:3000,http://127.0.0.1:3000,https://yoursite.com').split(',')
+# CORS_ALLOWED_ORIGINS = os.getenv(
+# 'CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,https://yoursite.com').split(',')
 
-CORS_ORIGIN_WHITELIST = (
-    'http://localhost:5173',
-    "https://social-canvas-3b50e.web.app"
-)
+# CORS_ORIGIN_WHITELIST = (
+#     'http://localhost:5173',
+#     "https://social-canvas-3b50e.web.app"
+# )
 
 CORS_ALLOW_METHODS = [
     'DELETE',
