@@ -46,7 +46,7 @@ CSRF_COOKIE_NAME = 'csrftoken'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Replace with the actual URL of your frontend
     "https://social-canvas.onrender.com",
-    "https://*.127.0.0.1",
+    # "https://*.127.0.0.1",
     "https://social-canvas-3b50e.web.app"
 ]
 
