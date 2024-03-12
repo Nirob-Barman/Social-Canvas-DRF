@@ -15,6 +15,12 @@ class Post(models.Model):
     @property
     def comment_count_value(self):
         return self.comments.count()
+    
+    @comment_count_value.setter
+    def comment_count_value(self, value):
+        # You can implement a custom setter logic if needed
+        # For example, you might want to do something with the value
+        pass
 
     def __str__(self):
         return f"{self.user.username}'s Post-{self.id} - {self.content} ({self.created_at})"

@@ -325,55 +325,8 @@ class AddPostView(generics.CreateAPIView):
         serializer.save(user=self.request.user)
 
 
-# class TopCommentedPostsView(APIView):
-#     def get(self, request, *args, **kwargs):
-#         try:
-#             # Retrieve top commented posts
-#             top_commented_posts = Post.objects.annotate(
-#                 comment_count=models.Count('comments')).order_by('-comment_count')[:5]
-
-#             # Serialize the posts
-#             serializer = PostSerializer(top_commented_posts, many=True)
-
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# class TopCommentedPostsView(APIView):
-#     def get(self, request, *args, **kwargs):
-#         try:
-#             # Subquery to get comment count for each post
-#             comment_count_subquery = Subquery(
-#                 Comment.objects.filter(post=models.OuterRef('pk')).values(
-#                     'post').annotate(comment_count=Count('id')).values('comment_count')[:1]
-#             )
-
-#             # Retrieve top commented posts
-#             top_commented_posts = Post.objects.annotate(comment_count=Coalesce(
-#                 comment_count_subquery, 0)).order_by('-comment_count')[:5]
-
-#             # Serialize the posts
-#             serializer = PostSerializer(top_commented_posts, many=True)
-
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-# class TopCommentedPostsView(APIView):
-#     def get(self, request, *args, **kwargs):
-#         try:
-#             # Retrieve top commented posts
-#             top_commented_posts = Post.objects.annotate(comment_count=Count('comments')).order_by('-comment_count')[:5]
-            
-#             # Serialize the posts
-#             serializer = PostSerializer(top_commented_posts, many=True)
-            
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 class TopCommentedPostsView(APIView):
+    # permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
         try:
             # Retrieve top commented posts
@@ -386,18 +339,6 @@ class TopCommentedPostsView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# class UpdatePostView(generics.UpdateAPIView):
-#     queryset = Post.objects.all()
-#     serializer_class = PostSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-
-#     def get_object(self):
-#         # Override the default get_object to include user check
-#         obj = super().get_object()
-#         if obj.user == self.request.user:
-#             return obj
-#         raise PermissionDenied("You don't have permission to update this post.")
 
 
 class UpdatePostView(generics.RetrieveUpdateAPIView):
@@ -419,26 +360,6 @@ class UpdatePostView(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(current_object)
         return Response(serializer.data)
 
-
-# class DeletePostView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-
-#     def delete(self, request, pk):
-#         # Ensure user owns the post
-#         post = get_object_or_404(Post, pk=pk, user=request.user)
-#         post.delete()
-#         return Response({'message': 'Post deleted successfully'}, status=204)
-
-# class DeletePostView(APIView):
-#     def delete(self, request, pk):
-#         post = get_object_or_404(Post, pk=pk)
-
-#         # Check if the user making the request is the owner of the post
-#         if request.user != post.user:
-#             return Response({"detail": "You do not have permission to delete this post."}, status=status.HTTP_403_FORBIDDEN)
-
-#         post.delete()
-#         return Response({"detail": "Post deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 class DeletePostView(APIView):
     def delete(self, request, pk):
