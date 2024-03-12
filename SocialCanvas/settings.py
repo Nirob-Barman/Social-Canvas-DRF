@@ -47,7 +47,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Replace with the actual URL of your frontend
     "https://social-canvas.onrender.com",
     # "https://*.127.0.0.1",
-    "https://social-canvas-3b50e.web.app"
+    "https://social-canvas-3b50e.web.app/"
 ]
 
 # CORS_ALLOWED_ORIGINS = getenv('CORS_ALLOWED_ORIGINS','http://localhost:3000,http://127.0.0.1:3000,https://yoursite.com').split(',')
