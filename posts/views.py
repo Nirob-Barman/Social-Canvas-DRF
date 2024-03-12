@@ -14,6 +14,17 @@ from rest_framework.decorators import api_view, permission_classes
 from django.db import models
 
 
+class RecentPostsView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    # Adjust the number of posts as needed
+    queryset = Post.objects.all().order_by('-created_at')[:10]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class PostListViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
@@ -45,6 +56,30 @@ class PostDetailView(generics.RetrieveAPIView):
 #         context.update({'request': self.request})
 #         return context
 
+
+class ActivityFeedAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        # Retrieve recent posts, comments, and likes from followed users
+        following_users = request.user.profile.following.all()
+        followed_posts = Post.objects.filter(
+            user__in=following_users).order_by('-created_at')[:10]
+        followed_comments = Comment.objects.filter(
+            user__in=following_users).order_by('-created_at')[:10]
+        followed_likes = Like.objects.filter(
+            post__user__in=following_users).order_by('-created_at')[:10]
+
+        # Combine and order the activities
+        activities = list(followed_posts) + \
+            list(followed_comments) + list(followed_likes)
+        activities.sort(key=lambda x: x.created_at, reverse=True)
+        activities = activities[:10]
+
+        # Serialize the data
+        activity_feed_data = ActivityFeedSerializer(activities, many=True).data
+
+        return Response(activity_feed_data, status=status.HTTP_200_OK)
 
 class LikeCreateView(generics.CreateAPIView):
     serializer_class = LikeSerializer
@@ -160,6 +195,7 @@ class UnlikedPostsListView(generics.ListAPIView):
             user=user).values_list('post__id', flat=True)
         return Post.objects.exclude(id__in=liked_post_ids)
 
+
 class CommentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -179,6 +215,7 @@ class CommentCreateView(generics.CreateAPIView):
         post_id = self.kwargs.get('post_id')
         print("post id: ", post_id)
         post = get_object_or_404(Post, id=post_id)
+        print("post: ", post)
         serializer.save(user=self.request.user, post=post)
 
 
@@ -193,6 +230,16 @@ class UserCommentsListView(generics.ListAPIView):
         return Comment.objects.filter(user=user)
 
 
+class UserCommentedPostsView(APIView):
+    def get(self, request, *args, **kwargs):
+        # Fetch posts on which the current user has commented
+        user_commented_posts = Post.objects.filter(
+            comment__user=request.user).distinct()
+        serializer = PostSerializer(user_commented_posts, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class AllCommentsListView(generics.ListAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
@@ -204,6 +251,7 @@ class UncommentedPostListView(APIView):
         uncommented_posts = Post.objects.filter(comment_count=0)
         serializer = PostSerializer(uncommented_posts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class PostCommentCountView(APIView):
     permission_classes = [IsAuthenticated]

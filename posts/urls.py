@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    RecentPostsView,
     PostListView,
     PostListViewSet,
     PostDetailView,
@@ -13,6 +14,7 @@ from .views import (
     LeastLikedPostsView,
     CommentCreateView,
     UserCommentsListView,
+    UserCommentedPostsView,
     AllCommentsListView,
     UncommentedPostListView,
     PostCommentCountView,
@@ -33,6 +35,7 @@ router = DefaultRouter()
 router.register(r'all_posts', PostListViewSet, basename='post')
 
 urlpatterns = [
+    path('recent-posts/', RecentPostsView.as_view(), name='recent-posts'),
     path('list/', PostListView.as_view(), name='post-list'),
     path('<int:pk>/', PostDetailView.as_view(), name='post-detail'),
     path('like/create/<int:post_id>/',
@@ -50,6 +53,8 @@ urlpatterns = [
     path('comments/<int:post_id>/',
          CommentCreateView.as_view(), name='create_comment'),
     path('user/comments/', UserCommentsListView.as_view(), name='user_comments'),
+    path('user/comments/posts/', UserCommentedPostsView.as_view(),
+         name='user_commented_posts'),
     path('comments/all/', AllCommentsListView.as_view(), name='all_comments'),
     path('uncommented-posts/', UncommentedPostListView.as_view(),
          name='uncommented_posts_list'),

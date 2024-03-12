@@ -9,12 +9,13 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'post', 'content', 'created_at']
 
 
-
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
+
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name']
+
 
 class PostSerializer(serializers.ModelSerializer):
     # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
@@ -27,7 +28,6 @@ class PostSerializer(serializers.ModelSerializer):
 
     # Include comments for each post
     comments = CommentSerializer(many=True, read_only=True)
-    
 
     class Meta:
         model = Post
@@ -48,7 +48,3 @@ class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Like
         fields = ['id', 'user', 'post', 'created_at']
-
-
-
-
