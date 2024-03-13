@@ -246,7 +246,7 @@ class AllCommentsListView(generics.ListAPIView):
 
 class UncommentedPostListView(APIView):
     def get(self, request, *args, **kwargs):
-        uncommented_posts = Post.objects.filter(comment_count=0)
+        uncommented_posts = Post.objects.annotate(comment_count=Count('comments')).filter(comment_count=0)
         serializer = PostSerializer(uncommented_posts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
