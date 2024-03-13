@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     'django_filters',
     'accounts',
     'posts',
+    'reviews',
 ]
 
 # INTERNAL_IPS = [
