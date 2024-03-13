@@ -60,28 +60,47 @@ class PostDetailView(generics.RetrieveAPIView):
 #         return context
 
 
+# class LikeCreateView(generics.CreateAPIView):
+#     serializer_class = LikeSerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def perform_create(self, serializer):
+#         # Get the post ID from the URL
+#         post_id = self.kwargs.get('post_id', None)
+#         # print(post_id)
+
+#         # Check if the post exists
+#         post = get_object_or_404(Post, pk=post_id)
+#         # print(post)
+
+#         # Associate the like with the current user and the post
+#         serializer.save(user=self.request.user, post=post)
+
+#         # Update the like count in the associated post
+#         post.like_count += 1
+#         post.save()
+
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
 class LikeCreateView(generics.CreateAPIView):
     serializer_class = LikeSerializer
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        # Get the post ID from the URL
         post_id = self.kwargs.get('post_id', None)
-        # print(post_id)
-
-        # Check if the post exists
         post = get_object_or_404(Post, pk=post_id)
-        # print(post)
+        # serializer.save(post=post)
 
-        # Associate the like with the current user and the post
-        serializer.save(user=self.request.user, post=post)
+        # Include the user from the request
+        user = self.request.user
+        serializer.save(user=user, post=post)
 
         # Update the like count in the associated post
         post.like_count += 1
         post.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class UserHasLikedView(generics.RetrieveAPIView):
     serializer_class = LikeSerializer

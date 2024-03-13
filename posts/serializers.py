@@ -51,7 +51,12 @@ class PostSerializer(serializers.ModelSerializer):
         return False
 
 
+# class LikeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Like
+#         fields = ['id', 'user', 'post', 'created_at']
+
 class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Like
-        fields = ['id', 'user', 'post', 'created_at']
+        fields = ['id', 'created_at']
