@@ -3,10 +3,15 @@ from .models import Post, Like, Comment
 from django.contrib.auth.models import User
 
 
+# class CommentSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Comment
+#         fields = ['id', 'user', 'post', 'content', 'created_at']
+
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'post', 'content', 'created_at']
+        fields = ['id', 'content', 'created_at']
 
 
 class UserSerializer(serializers.ModelSerializer):

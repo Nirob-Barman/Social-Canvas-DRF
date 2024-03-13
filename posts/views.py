@@ -17,7 +17,6 @@ from django.db.models import Count, Subquery
 from django.db.models.functions import Coalesce
 
 
-
 class RecentPostsView(generics.ListAPIView):
     serializer_class = PostSerializer
     # Adjust the number of posts as needed
