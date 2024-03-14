@@ -116,7 +116,7 @@ class UserRegistration(APIView):
             current_site = get_current_site(request)
 
             # print("Current site:",current_site.domain)
-            current_site_domain = "http://social-canvas.onrender.com"
+            current_site_domain = "social-canvas.onrender.com"
 
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
