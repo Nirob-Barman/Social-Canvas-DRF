@@ -155,7 +155,8 @@ def activate(request, uid64, token):
     else:
         messages.error(request, "Invalid activation link.")
         # return redirect('register')
-        return redirect('https://social-canvas-3b50e.web.app/signUp')
+        # return redirect('https://social-canvas-3b50e.web.app/signUp')
+        return redirect('https://social-canvas-3b50e.web.app/login')
 
 
 class UserLoginApiView(APIView):
