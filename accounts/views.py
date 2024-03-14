@@ -38,6 +38,7 @@ from django.conf import settings
 
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 
+
 class UserDetailView(APIView):
     # authentication_classes = [BasicAuthentication]
     # authentication_classes = [SessionAuthentication, BasicAuthentication]
@@ -63,7 +64,7 @@ class UserDetailView(APIView):
         session_id = request.session.session_key
         # print('csrf_token', csrf_token)
         # print("session_id", session_id)
-        
+
         return Response(user_details, status=status.HTTP_200_OK)
 
 # @api_view(['GET'])
@@ -83,6 +84,7 @@ class UserDetailView(APIView):
 #     }
 #     return Response(user_details)
 
+
 class UserDetailViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
@@ -101,6 +103,7 @@ class UserDetailViewSet(viewsets.ViewSet):
         }
         return Response(user_details)
 
+
 class UserRegistration(APIView):
     serializer_class = serializers.RegistrationSerializer
 
@@ -112,9 +115,13 @@ class UserRegistration(APIView):
             # Generate activation link with the correct domain
             current_site = get_current_site(request)
 
+            print("Current site:",current_site.domain)
+            current_site_domain = "http://social-canvas.onrender.com"
+
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             # confirm_link = f'http://127.0.0.1:8000/accounts/activate/{uid}/{token}/'
+            # confirm_link = f'http://{current_site.domain}/accounts/activate/{uid}/{token}/'
             confirm_link = f'http://{current_site.domain}/accounts/activate/{uid}/{token}/'
 
             email_subject = 'Confirm your email'
@@ -142,13 +149,13 @@ def activate(request, uid64, token):
         user.save()
         messages.success(
             request, "Your account has been activated. You can now log in.")
-        # return redirect('login')
+        return redirect('login')
         # Redirect to the frontend login page
-        return redirect('https://social-canvas-3b50e.web.app/login')
+        # return redirect('https://social-canvas-3b50e.web.app/login')
     else:
         messages.error(request, "Invalid activation link.")
         return redirect('register')
-
+        # return redirect('https://social-canvas-3b50e.web.app/signUp')
 
 
 class UserLoginApiView(APIView):
@@ -164,7 +171,7 @@ class UserLoginApiView(APIView):
 
         user = User.objects.filter(email=email).first()
         # print(f"User: {user}")
-        
+
         if user and user.check_password(password):
             token, _ = Token.objects.get_or_create(user=user)
             login(request, user)

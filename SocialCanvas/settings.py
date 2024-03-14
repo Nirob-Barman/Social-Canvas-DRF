@@ -33,7 +33,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://social-canvas.onrender.com/', 'https://*.127.0.0.1',
+    'https://social-canvas.onrender.com', 'https://*.127.0.0.1',
     # 'https://social-canvas.onrender.com', 'https://social-canvas.onrender'
 ]
 
