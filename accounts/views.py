@@ -144,7 +144,7 @@ def activate(request, uid64, token):
             request, "Your account has been activated. You can now log in.")
         # return redirect('login')
         # Redirect to the frontend login page
-        return redirect('http://localhost:5173/login')
+        return redirect('https://social-canvas-3b50e.web.app/login')
     else:
         messages.error(request, "Invalid activation link.")
         return redirect('register')
