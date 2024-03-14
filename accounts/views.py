@@ -115,14 +115,14 @@ class UserRegistration(APIView):
             # Generate activation link with the correct domain
             current_site = get_current_site(request)
 
-            print("Current site:",current_site.domain)
+            # print("Current site:",current_site.domain)
             current_site_domain = "http://social-canvas.onrender.com"
 
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             # confirm_link = f'http://127.0.0.1:8000/accounts/activate/{uid}/{token}/'
             # confirm_link = f'http://{current_site.domain}/accounts/activate/{uid}/{token}/'
-            confirm_link = f'http://{current_site.domain}/accounts/activate/{uid}/{token}/'
+            confirm_link = f'http://{current_site_domain}/accounts/activate/{uid}/{token}/'
 
             email_subject = 'Confirm your email'
             email_body = render_to_string(
@@ -149,13 +149,13 @@ def activate(request, uid64, token):
         user.save()
         messages.success(
             request, "Your account has been activated. You can now log in.")
-        return redirect('login')
+        # return redirect('login')
         # Redirect to the frontend login page
-        # return redirect('https://social-canvas-3b50e.web.app/login')
+        return redirect('https://social-canvas-3b50e.web.app/login')
     else:
         messages.error(request, "Invalid activation link.")
-        return redirect('register')
-        # return redirect('https://social-canvas-3b50e.web.app/signUp')
+        # return redirect('register')
+        return redirect('https://social-canvas-3b50e.web.app/signUp')
 
 
 class UserLoginApiView(APIView):
